@@ -13,21 +13,6 @@ df = pd.read_csv("project_tourism/data/tourism.csv")
 # Drop id column, as it does not provide meaningful insights
 df.drop(columns=["CustomerID"], inplace=True)
 
-# Handle missing values
-print("Handle missing values"
-)
-# For numerical columns, fill with median
-numerical_cols = df.select_dtypes(include=[np.number]).columns
-for col in numerical_cols:
-    if df[col].isnull().sum() > 0:
-        df[col].fillna(df[col].median(), inplace=True)
-
-# For categorical columns, fill with mode
-categorical_cols = df.select_dtypes(include=['object']).columns
-for col in categorical_cols:
-    if df[col].isnull().sum() > 0:
-        df[col].fillna(df[col].mode()[0], inplace=True)
-
 # Handle specific data quality issues (e.g., "Fe Male" should be "Female")
 if 'Gender' in df.columns:
     df['Gender'] = df['Gender'].str.strip().replace({'Fe Male': 'Female', 'Fe male': 'Female'})
