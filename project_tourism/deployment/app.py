@@ -2,38 +2,27 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
-from sklearn.preprocessing import LabelEncoder
 
 # --- Streamlit App Configuration (Must be first Streamlit command) --- #
 st.set_page_config(page_title="Tourism Package Predictor", layout="centered")
 
 # --- Paths --- #
 MODEL_PATH = "project_tourism/deployment/best_tourism_prediction_model.joblib"
-DATA_PATH = "project_tourism/data/tourism.csv"
 
-# --- Load Model and Data for Encoders --- #
+# --- Load Model --- #
 @st.cache_resource
-def load_model_and_encoders():
+def load_model():
     try:
-        model = joblib.load(MODEL_PATH)
-        df_original = pd.read_csv(DATA_PATH)
-
-        # Fit LabelEncoders on original data to ensure consistency
-        encoders = {}
-        categorical_cols = ['TypeofContact', 'Occupation', 'Gender', 'MaritalStatus', 'ProductPitched', 'Designation']
-        for col in categorical_cols:
-            le = LabelEncoder()
-            le.fit(df_original[col])
-            encoders[col] = le
-        return model, encoders
+        model = joblib.load(MODEL_PATH)        
+        return model
     except FileNotFoundError as e:
-        st.error(f"Error loading essential files: {e}. Make sure 'model' and 'data' directories exist and contain the model and original data.")
+        st.error(f"Error loading essential files: {e}. Make sure 'model' directory exists and contains the model.")
         st.stop()
     except Exception as e:
         st.error(f"An unexpected error occurred during loading: {e}")
         st.stop()
 
-model, encoders = load_model_and_encoders()
+model = load_model()
 
 # --- Streamlit App Content --- #
 st.title("🌴 Tourism Package Purchase Predictor ✈️")
@@ -46,15 +35,16 @@ with st.form("prediction_form"):
     col1, col2 = st.columns(2)
     with col1:
         Age = st.slider("Age", 18, 70, 30)
-        TypeofContact = st.selectbox("Type of Contact", list(encoders['TypeofContact'].classes_))
+        # For simplicity, we will use fixed lists for known categories
+        TypeofContact = st.selectbox("Type of Contact", ['Self Enquiry', 'Company Invited'])
         CityTier = st.selectbox("City Tier", [1, 2, 3])
-        Occupation = st.selectbox("Occupation", list(encoders['Occupation'].classes_))
-        Gender = st.selectbox("Gender", list(encoders['Gender'].classes_))
+        Occupation = st.selectbox("Occupation", ['Salaried', 'Small Business', 'Large Business', 'Free Lancer', 'Government Sector'])
+        Gender = st.selectbox("Gender", ['Male', 'Female'])
         NumberOfPersonVisiting = st.number_input("Number of Persons Visiting", 1, 10, 1)
 
     with col2:
         PreferredPropertyStar = st.slider("Preferred Property Star", 1, 5, 3)
-        MaritalStatus = st.selectbox("Marital Status", list(encoders['MaritalStatus'].classes_))
+        MaritalStatus = st.selectbox("Marital Status", ['Single', 'Married', 'Divorced'])
         NumberOfTrips = st.number_input("NumberOfTrips Annually", 0, 20, 2)
         Passport = st.selectbox("Passport", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         OwnCar = st.selectbox("Own Car", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
@@ -64,11 +54,11 @@ with st.form("prediction_form"):
     col3, col4 = st.columns(2)
 
     with col3:
-        Designation = st.selectbox("Designation", list(encoders['Designation'].classes_))
+        Designation = st.selectbox("Designation", ['Executive', 'Manager', 'Senior Manager', 'AVP', 'VP', 'Director'])
         MonthlyIncome = st.number_input("Monthly Income", 0, 100000, 30000)
         PitchSatisfactionScore = st.slider("Pitch Satisfaction Score", 1, 5, 3)
     with col4:
-        ProductPitched = st.selectbox("Product Pitched", list(encoders['ProductPitched'].classes_))
+        ProductPitched = st.selectbox("Product Pitched", ['Basic', 'Deluxe', 'Super Deluxe', 'King', 'Standard'])
         NumberOfFollowups = st.number_input("Number of Follow-ups", 0, 10, 3)
         DurationOfPitch = st.number_input("Duration of Pitch (minutes)", 0, 60, 15)
 
@@ -95,15 +85,7 @@ with st.form("prediction_form"):
             'ProductPitched': [ProductPitched],
             'NumberOfFollowups': [NumberOfFollowups],
             'DurationOfPitch': [DurationOfPitch]
-        })
-
-        # Apply Label Encoding
-        for col, encoder in encoders.items():
-            # Handle cases where input might not be in training categories
-            # This assumes `handle_unknown='ignore'` was effectively used or not an issue during training
-            # For Streamlit, we convert unseen labels to the most frequent or a placeholder
-            # For simplicity, if a label is not found, it will raise an error. Ensure original data covers all options.
-            input_data[col] = encoder.transform(input_data[col])
+        })        
 
         # Make prediction
         prediction_proba = model.predict_proba(input_data)[:, 1]
@@ -116,5 +98,5 @@ with st.form("prediction_form"):
             st.info(f"The customer is predicted **not to purchase** the package with a probability of {1 - prediction_proba[0]:.2f}.")
 
         st.write("--- Debug Info ---")
-        st.write("Processed Input Data:")
+        st.write("Processed Input Data (before model's internal preprocessing):")
         st.write(input_data)
