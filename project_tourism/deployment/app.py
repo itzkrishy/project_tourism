@@ -4,6 +4,9 @@ import joblib
 import os
 from sklearn.preprocessing import LabelEncoder
 
+# --- Streamlit App Configuration (Must be first Streamlit command) --- #
+st.set_page_config(page_title="Tourism Package Predictor", layout="centered")
+
 # --- Paths --- #
 MODEL_PATH = "project_tourism/deployment/best_tourism_prediction_model.joblib"
 DATA_PATH = "project_tourism/data/tourism.csv"
@@ -32,8 +35,7 @@ def load_model_and_encoders():
 
 model, encoders = load_model_and_encoders()
 
-# --- Streamlit App --- #
-st.set_page_config(page_title="Tourism Package Predictor", layout="centered")
+# --- Streamlit App Content --- #
 st.title("🌴 Tourism Package Purchase Predictor ✈️")
 st.markdown("Enter customer details to predict if they will purchase the Wellness Tourism Package.")
 
@@ -53,7 +55,7 @@ with st.form("prediction_form"):
     with col2:
         PreferredPropertyStar = st.slider("Preferred Property Star", 1, 5, 3)
         MaritalStatus = st.selectbox("Marital Status", list(encoders['MaritalStatus'].classes_))
-        NumberOfTrips = st.number_input("Number of Trips Annually", 0, 20, 2)
+        NumberOfTrips = st.number_input("NumberOfTrips Annually", 0, 20, 2)
         Passport = st.selectbox("Passport", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         OwnCar = st.selectbox("Own Car", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         NumberOfChildrenVisiting = st.number_input("Number of Children Visiting (below 5)", 0, 5, 0)
