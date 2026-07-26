@@ -4,8 +4,6 @@ import pandas as pd
 import os
 # for data preprocessing and pipeline creation
 from sklearn.model_selection import train_test_split
-# for converting text data in to numerical representation
-from sklearn.preprocessing import LabelEncoder
 
 # Load dataset
 df = pd.read_csv("project_tourism/data/tourism.csv")
@@ -16,11 +14,6 @@ df.drop(columns=["CustomerID"], inplace=True)
 # Handle specific data quality issues (e.g., "Fe Male" should be "Female")
 if 'Gender' in df.columns:
     df['Gender'] = df['Gender'].str.strip().replace({'Fe Male': 'Female', 'Fe male': 'Female'})
-
-# Encode categorical columns
-label_encoder = LabelEncoder()
-for col in ['TypeofContact', 'Occupation', 'Gender', 'MaritalStatus', 'ProductPitched', 'Designation']:
-    df[col] = label_encoder.fit_transform(df[col])
 
 # Target column
 target_col = 'ProdTaken'
